@@ -20,10 +20,8 @@ def convert_to_xlsx(csv_path):
     """Конвертирует CSV в XLSX с обработкой временных меток"""
     try:
         # Чтение CSV с указанием нужных столбцов
-        df = pd.read_csv(csv_path, usecols=["id", "timestamp, GMT", "action"])
+        df = pd.read_csv(csv_path, usecols=["id", "timestamp", "action"])
         
-        # Переименование столбца для удобства
-        df = df.rename(columns={"timestamp, GMT": "timestamp"})
         
         # Преобразование временной метки
         df['timestamp'] = pd.to_datetime(df['timestamp'])
