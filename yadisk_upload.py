@@ -15,7 +15,7 @@ CONFIG = {
     "local_file": "user_actions.csv",
     "remote_filename": "user_actions.xlsx",
     "convert_to_excel": True,
-    "required_columns": ["id", "timestamp", "action"],
+    "required_columns": ["id", "datetime", "action"],
     "time_format": "%Y-%m-%d %H:%M:%S",  # Пример нужного формата для выгрузки в Excel
     "input_time_format": "%d.%m.%Y %H.%M.%S"  # Формат времени в исходном файле
 }
