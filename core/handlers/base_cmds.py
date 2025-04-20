@@ -1,4 +1,4 @@
-from aiogram import F, Router, Bot
+from aiogram import F, Router, Bot, types
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, FSInputFile
 from aiogram.types.webhook_info import WebhookInfo
@@ -10,7 +10,9 @@ from core.database.models import async_session
 from core.middlwares.db import DBMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database.requests import add_user_stat
+from core.handlers.logger import UserActionLogger
 
+action_logger = UserActionLogger()
 base_cmd_router = Router()
 base_cmd_router.message.middleware(DBMiddleware(async_session))
 
@@ -23,7 +25,7 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
                         message.date,
                         'Start')
 
-    await message.answer('Задайте мне вопрос, и я что-нибудь отвечу')
+    await message.answer("Привет, {message.from_user.first_name}! Задайте мне вопрос, и я отвечу")
 
 
 @base_cmd_router.message(Command('help'))
