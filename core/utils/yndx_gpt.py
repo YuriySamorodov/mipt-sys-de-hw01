@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 
 class YandexGPTManager:
     def __init__(self):
-        self.model_uri = f"gpt://{os.getenv('YC_FOLDER_ID')}/yandexgpt-lite"
+        self.model_uri = f"gpt://{os.getenv('YCFOLDERID')}/yandexgpt-lite"
         self.api_url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
         self.conversation_threads = {}
         self.key_file = r"C:\Users\Администратор\Desktop\YNDX_TG_BOT\authorized_key.json"
