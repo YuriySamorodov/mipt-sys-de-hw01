@@ -20,10 +20,12 @@ base_cmd_router.message.middleware(DBMiddleware(async_session))
 async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
     await state.set_state(DialogReg.start)
 
+    action_logger.log_action(message.from_user.id, 'start')
+    
     await add_user_stat(session,
                         message.from_user.id,
                         message.date,
-                        'Start')
+                        'start')
 
     await message.answer("Привет, {message.from_user.first_name}! Задайте мне вопрос, и я отвечу")
 
