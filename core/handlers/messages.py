@@ -31,4 +31,5 @@ async def handle_text_message(message: Message):
 # Fallback — для всех остальных типов сообщений
 @dialog_router.message()
 async def handle_non_text_message(message: Message):
+    action_logger.log_action(message.from_user.id, 'answer')
     await message.answer("Я могу обработать только текст. Картинки обработаны не будут.")
