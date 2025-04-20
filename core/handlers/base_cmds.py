@@ -23,8 +23,7 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
                         message.date,
                         'start')
 
-    await message.answer('Бот запущен',
-                         reply_markup=reply_kb.main_kb)
+    await message.answer('Бот запущен')
 
 
 @base_cmd_router.message(Command('help'))
