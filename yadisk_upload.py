@@ -67,18 +67,13 @@ def convert_to_xlsx(csv_path):
         return None
 
 def upload_to_yandex_disk(local_file, remote_path):
-    """Загрузка файла на Яндекс.Диск"""
+    """Загрузка файла на Яндекс.Диск с перезаписью существующего файла"""
     try:
         ydisk = YaDisk(token=os.getenv("YANDEX_TOKEN"))
         
-        # Проверка, существует ли путь на Я.Диске
-        if not ydisk.exists(remote_path):
-            print(f"Указанный путь на Яндекс.Диске не существует: {remote_path}")
-            return False
-        
         # Открываем файл для чтения
         with open(local_file, 'rb') as file:
-            ydisk.upload(file, remote_path)
+            ydisk.upload(file, remote_path, overwrite=True)  # Перезаписываем файл, если он существует
         
         print(f"Файл успешно загружен на Яндекс.Диск")
         return True
