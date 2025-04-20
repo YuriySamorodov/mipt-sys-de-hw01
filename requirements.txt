@@ -39,6 +39,6 @@ typing_extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
 wrapt==1.17.2
-yandexcloud==0.340.0
+yandexcloud
 yandexgpt-python==0.2.3
 yarl==1.20.0
