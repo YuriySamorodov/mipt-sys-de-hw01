@@ -16,7 +16,7 @@ async def run_bot():
     load_dotenv()
     await async_main()
 
-    bot = Bot(token=os.getenv('BOT_TOKEN'))
+    bot = Bot(token=os.getenv('BOTTOKEN'))
 
     await bot(DeleteWebhook(drop_pending_updates=True))
 
