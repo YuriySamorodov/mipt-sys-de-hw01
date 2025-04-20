@@ -1,4 +1,4 @@
-from aiogram import F, Router, Bot, types
+from aiogram import F, Router, Bot
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, FSInputFile
 from aiogram.types.webhook_info import WebhookInfo
