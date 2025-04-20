@@ -7,7 +7,7 @@ from core.middlwares.db import DBMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database.models import async_session
 from aiogram import F, Router
-from aiogram import CallbackQuery
+from aiogram.types import CallbackQuery
 import re
 import os
 import json
