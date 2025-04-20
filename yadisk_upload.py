@@ -35,9 +35,9 @@ def validate_csv(file_path):
         raise ValueError(f"Ошибка чтения CSV: {str(e)}")
 
 def convert_to_xlsx(csv_path):
-    """Конвертация CSV без заголовков в XLSX"""
+    """Конвертация CSV без заголовков в XLSX с обновленным названием колонки для времени"""
     try:
-        # Чтение без заголовков
+        # Чтение CSV без заголовков
         df = pd.read_csv(
             csv_path,
             header=None,
@@ -49,12 +49,12 @@ def convert_to_xlsx(csv_path):
         if df.shape[1] < len(CONFIG['required_columns']):
             raise ValueError(f"Недостаточно колонок в данных: найдено {df.shape[1]}, ожидалось {len(CONFIG['required_columns'])}")
 
-        # Обработка временной метки с использованием заданного формата
+        # Обработка временной метки с использованием нового названия колонки 'datetime'
         try:
-            df['timestamp'] = pd.to_datetime(df['timestamp'], format=CONFIG['input_time_format'])
-            df['timestamp'] = df['timestamp'].dt.strftime(CONFIG['time_format'])
+            df['datetime'] = pd.to_datetime(df['datetime'], format=CONFIG['input_time_format'])
+            df['datetime'] = df['datetime'].dt.strftime(CONFIG['time_format'])
         except Exception as e:
-            raise ValueError(f"Ошибка обработки времени: {str(e)}. Пример значения: {df['timestamp'].iloc[0]}")
+            raise ValueError(f"Ошибка обработки времени: {str(e)}. Пример значения: {df['datetime'].iloc[0]}")
         
         # Сохраняем в Excel
         temp_file = Path("temp_stats.xlsx")
@@ -65,6 +65,7 @@ def convert_to_xlsx(csv_path):
     except Exception as e:
         print(f"Ошибка конвертации: {str(e)}", file=sys.stderr)
         return None
+
 
 def upload_to_yandex_disk(local_file, remote_path):
     """Загрузка файла на Яндекс.Диск с перезаписью существующего файла"""
