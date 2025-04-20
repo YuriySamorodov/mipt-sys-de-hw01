@@ -21,7 +21,7 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
     await add_user_stat(session,
                         message.from_user.id,
                         message.date,
-                        'Поговорите со мной, пожалуйста')
+                        'Start')
 
     await message.answer('Задайте мне вопрос, и я что-нибудь отвечу')
 
