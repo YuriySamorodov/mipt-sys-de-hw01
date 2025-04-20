@@ -16,7 +16,8 @@ CONFIG = {
     "remote_filename": "user_actions.xlsx",
     "convert_to_excel": True,
     "required_columns": ["id", "timestamp", "action"],
-    "time_format": "%Y-%m-%d %H:%M:%S"
+    "time_format": "%Y-%m-%d %H:%M:%S",  # Пример нужного формата для выгрузки в Excel
+    "input_time_format": "%d.%m.%Y %H.%M.%S"  # Формат времени в исходном файле
 }
 
 def validate_csv(file_path):
@@ -48,9 +49,9 @@ def convert_to_xlsx(csv_path):
         if df.shape[1] < len(CONFIG['required_columns']):
             raise ValueError(f"Недостаточно колонок в данных: найдено {df.shape[1]}, ожидалось {len(CONFIG['required_columns'])}")
 
-        # Обработка временной метки
+        # Обработка временной метки с использованием заданного формата
         try:
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'], format=CONFIG['input_time_format'])
             df['timestamp'] = df['timestamp'].dt.strftime(CONFIG['time_format'])
         except Exception as e:
             raise ValueError(f"Ошибка обработки времени: {str(e)}. Пример значения: {df['timestamp'].iloc[0]}")
@@ -62,7 +63,7 @@ def convert_to_xlsx(csv_path):
         
         return temp_file
     except Exception as e:
-        print(f"[{datetime.now()}] Ошибка конвертации: {str(e)}", file=sys.stderr)
+        print(f"Ошибка конвертации: {str(e)}", file=sys.stderr)
         return None
 
 def upload_to_yandex_disk(local_file, remote_path):
@@ -72,26 +73,25 @@ def upload_to_yandex_disk(local_file, remote_path):
         
         # Проверка, существует ли путь на Я.Диске
         if not ydisk.exists(remote_path):
-            print(f"[{datetime.now()}] Указанный путь на Яндекс.Диске не существует: {remote_path}")
+            print(f"Указанный путь на Яндекс.Диске не существует: {remote_path}")
             return False
         
         # Загрузка файла
-        print(f"[{datetime.now()}] Загружаем файл на Яндекс.Диск в {remote_path}")
         ydisk.upload(local_file, remote_path)
-        print(f"[{datetime.now()}] Файл успешно загружен на Яндекс.Диск")
+        print(f"Файл успешно загружен на Яндекс.Диск")
         return True
     except Exception as e:
-        print(f"[{datetime.now()}] Ошибка загрузки на Яндекс.Диск: {str(e)}", file=sys.stderr)
+        print(f"Ошибка загрузки на Яндекс.Диск: {str(e)}", file=sys.stderr)
         return False
 
 def main():
     try:
         csv_file = Path(CONFIG['local_file'])
         if not csv_file.exists():
-            print(f"[{datetime.now()}] Файл не найден: {csv_file}", file=sys.stderr)
+            print(f"Файл не найден: {csv_file}", file=sys.stderr)
             return 1
         
-        print(f"[{datetime.now()}] Проверка файла: {csv_file}")
+        print(f"Проверка файла: {csv_file}")
         print(f"Размер файла: {csv_file.stat().st_size} байт")
         
         try:
@@ -104,7 +104,7 @@ def main():
         # Конвертируем CSV в XLSX
         temp_file = convert_to_xlsx(csv_file)
         if not temp_file:
-            print(f"[{datetime.now()}] Ошибка конвертации CSV в XLSX", file=sys.stderr)
+            print(f"Ошибка конвертации CSV в XLSX", file=sys.stderr)
             return 1
         
         # Загружаем файл на Яндекс.Диск
@@ -114,10 +114,10 @@ def main():
         
         # Удаляем временный файл после успешной загрузки
         temp_file.unlink()
-        print(f"[{datetime.now()}] Временный файл удален: {temp_file}")
+        print(f"Временный файл удален: {temp_file}")
         
     except Exception as e:
-        print(f"[{datetime.now()}] Критическая ошибка: {str(e)}", file=sys.stderr)
+        print(f"Критическая ошибка: {str(e)}", file=sys.stderr)
         return 1
     return 0
 
