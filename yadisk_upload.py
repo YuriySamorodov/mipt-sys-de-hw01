@@ -69,20 +69,23 @@ def convert_to_xlsx(csv_path):
 def upload_to_yandex_disk(local_file, remote_path):
     """Загрузка файла на Яндекс.Диск"""
     try:
-        ydisk = YaDisk(token=os.getenv("YANDEX_TOKEN"))
+        ydisk = YaDisk(token=os.getenv("YANDEX_DISK_TOKEN"))
         
         # Проверка, существует ли путь на Я.Диске
         if not ydisk.exists(remote_path):
             print(f"Указанный путь на Яндекс.Диске не существует: {remote_path}")
             return False
         
-        # Загрузка файла
-        ydisk.upload(local_file, remote_path)
+        # Открываем файл для чтения
+        with open(local_file, 'rb') as file:
+            ydisk.upload(file, remote_path)
+        
         print(f"Файл успешно загружен на Яндекс.Диск")
         return True
     except Exception as e:
         print(f"Ошибка загрузки на Яндекс.Диск: {str(e)}", file=sys.stderr)
         return False
+
 
 def main():
     try:
