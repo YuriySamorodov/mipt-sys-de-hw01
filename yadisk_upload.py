@@ -10,22 +10,32 @@ import time
 load_dotenv()
 
 CONFIG = {
-    "remote_path": "/bot_statistics/",  # папка на Яндекс Диске
-    "local_file": "user_actions.csv",  # Локальный csv файл
-    "remote_filename": "user_actions.xlsx", 
+    "remote_path": "/bot_statistics/",
+    "local_file": "user_actions.csv",
+    "remote_filename": "user_actions.xlsx",
     "convert_to_excel": True
 }
 
 def convert_to_xlsx(csv_path):
-    """ Ковертирует CSV в XLSX"""
+    """Конвертирует CSV в XLSX с обработкой временных меток"""
     try:
-        df = pd.read_csv(csv_path)
-        # Create in-memory Excel file
+        # Чтение CSV с указанием нужных столбцов
+        df = pd.read_csv(csv_path, usecols=["id", "timestamp", "action"])
+        
+        # Преобразование временной метки
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        
+        # Создание Excel файла
         with pd.ExcelWriter("temp.xlsx", engine='openpyxl') as writer:
             df.to_excel(writer, index=False)
+            # Добавляем лист с агрегированной статистикой по часам
+            df['hour'] = df['timestamp'].dt.floor('H')
+            hourly_stats = df.groupby(['hour', 'action']).size().unstack(fill_value=0)
+            hourly_stats.to_excel(writer, sheet_name='Hourly Stats')
+            
         return Path("temp.xlsx")
     except Exception as e:
-        print(f"[{datetime.now()}] Conversion error: {str(e)}")
+        print(f"[{datetime.now()}] Ошибка конвертации: {str(e)}")
         return None
 
 def ensure_remote_dir(disk, path):
@@ -35,7 +45,7 @@ def ensure_remote_dir(disk, path):
             disk.mkdir(path)
         return True
     except Exception as e:
-        print(f"[{datetime.now()}] Directory error: {str(e)}")
+        print(f"[{datetime.now()}] Ошибка при работе с директорией: {str(e)}")
         return False
 
 def upload_file():
@@ -43,51 +53,42 @@ def upload_file():
         disk = YaDisk(token=os.getenv('YANDEX_TOKEN'))
         
         if not disk.check_token():
-            print(f"[{datetime.now()}] Invalid token")
+            print(f"[{datetime.now()}] Неверный токен")
             return
 
-        # Проверяет папку на Яндекс Диске
+        # Проверяем папку на Яндекс Диске
         if not ensure_remote_dir(disk, CONFIG['remote_path']):
             return
 
-        # Проверяет, что исходный файл никуда не исчез
+        # Проверяем наличие исходного файла
         csv_file = Path(CONFIG['local_file'])
         if not csv_file.exists():
-            print(f"[{datetime.now()}] CSV file not found")
+            print(f"[{datetime.now()}] CSV файл не найден")
             return
 
-        # Конвертирует CSV в XSLX, если необходимо
+        # Конвертируем в XLSX
         upload_path = csv_file
         if CONFIG['convert_to_excel']:
             if xlsx_file := convert_to_xlsx(csv_file):
                 upload_path = xlsx_file
+            else:
+                return
 
-        # Полный путь на Яндекс Диске
+        # Формируем путь на Яндекс Диске
         remote_path = f"{CONFIG['remote_path'].rstrip('/')}/{CONFIG['remote_filename']}"
 
-        # Загрузка на Яндекс Диск с перезаписью
+        # Загружаем с 3 попытками
         for attempt in range(3):
             try:
                 disk.upload(
                     str(upload_path), 
                     remote_path,
-                    overwrite=True  # This enables file overwriting
+                    overwrite=True
                 )
-                print(f"[{datetime.now()}] Successfully updated {remote_path}")
+                print(f"[{datetime.now()}] Файл успешно обновлен: {remote_path}")
                 break
             except Exception as e:
                 if attempt == 2:
-                    print(f"[{datetime.now()}] Final upload failed: {str(e)}")
+                    print(f"[{datetime.now()}] Ошибка загрузки после 3 попыток: {str(e)}")
                 else:
-                    print(f"[{datetime.now()}] Retrying upload... ({attempt+1}/3)")
-                    time.sleep(2)
-
-        # Очистка временных файлов
-        if CONFIG['convert_to_excel'] and upload_path.exists() and upload_path.name == "temp.xlsx":
-            upload_path.unlink()
-
-    except Exception as e:
-        print(f"[{datetime.now()}] Critical error: {str(e)}")
-
-if __name__ == "__main__":
-    upload_file()
+                    print(f"[{datetime.now()}] Повторная попытка ({
