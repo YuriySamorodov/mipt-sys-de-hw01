@@ -57,7 +57,7 @@ def upload_file():
             if xlsx_file := convert_to_xlsx(csv_file):
                 upload_path = xlsx_file
 
-        remote_name = f"stats_{datetime.now().strftime('%Y%m%d_%H%M')}{upload_path.suffix}"
+        remote_name = "user_actions"
         remote_path = f"{CONFIG['remote_path'].rstrip('/')}/{remote_name}"
 
         # Upload file
