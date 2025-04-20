@@ -20,7 +20,10 @@ def convert_to_xlsx(csv_path):
     """Конвертирует CSV в XLSX с обработкой временных меток"""
     try:
         # Чтение CSV с указанием нужных столбцов
-        df = pd.read_csv(csv_path, usecols=["id", "timestamp", "action"])
+        df = pd.read_csv(csv_path, usecols=["id", "timestamp, GMT", "action"])
+        
+        # Переименование столбца для удобства
+        df = df.rename(columns={"timestamp, GMT": "timestamp"})
         
         # Преобразование временной метки
         df['timestamp'] = pd.to_datetime(df['timestamp'])
@@ -91,4 +94,15 @@ def upload_file():
                 if attempt == 2:
                     print(f"[{datetime.now()}] Ошибка загрузки после 3 попыток: {str(e)}")
                 else:
-                    print(f"[{datetime.now()}] Повторная попытка ({
+                    print(f"[{datetime.now()}] Повторная попытка ({attempt+1}/3)...")
+                    time.sleep(2)
+
+        # Удаляем временный файл
+        if CONFIG['convert_to_excel'] and upload_path.name == "temp.xlsx":
+            upload_path.unlink()
+
+    except Exception as e:
+        print(f"[{datetime.now()}] Критическая ошибка: {str(e)}")
+
+if __name__ == "__main__":
+    upload_file()
