@@ -12,7 +12,7 @@ class YandexGPTManager:
         self.model_uri = f"gpt://{os.getenv('YCFOLDERID')}/yandexgpt-lite"
         self.api_url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
         self.conversation_threads = {}
-        self.key_file = r"~/authorized_key.json"
+        self.key_file = r"os.getenv('AUTHKEY')"
         self.iam_token = self._generate_iam_token()
 
     def _generate_iam_token(self):
