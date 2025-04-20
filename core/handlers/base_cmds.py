@@ -31,7 +31,7 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
                         message.date,
                         'start')
 
-    await message.answer("Привет, {user_name}! Задайте мне вопрос, и я отвечу")
+    await message.answer("fПривет, {user_name}! Задайте мне вопрос, и я отвечу")
 
 
 @base_cmd_router.message(Command('help'))
