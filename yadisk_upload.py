@@ -91,13 +91,13 @@ def main():
             print(f"Файл не найден: {csv_file}", file=sys.stderr)
             return 1
         
-        print(f"Проверка файла: {csv_file}")
-        print(f"Размер файла: {csv_file.stat().st_size} байт")
+        # print(f"Проверка файла: {csv_file}")
+        # print(f"Размер файла: {csv_file.stat().st_size} байт")
         
         try:
             sample_df = pd.read_csv(csv_file, nrows=2)
-            print("Пример содержимого CSV:")
-            print(sample_df.to_string())
+            # print("Пример содержимого CSV:")
+            # print(sample_df.to_string())
         except Exception as e:
             print(f"Не удалось прочитать CSV для диагностики: {str(e)}")
         
