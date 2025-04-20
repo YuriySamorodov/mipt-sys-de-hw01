@@ -21,8 +21,8 @@ def validate_csv(file_path):
     """Проверяет структуру CSV файла"""
     try:
         df = pd.read_csv(file_path, nrows=1)
-        if not {"id", "datetime", "action"}.issubset(df.columns):
-            missing = {"id", "datetime", "action"} - set(df.columns)
+        if not {"id", "timestamp", "action"}.issubset(df.columns):
+            missing = {"id", "timestamp", "action"} - set(df.columns)
             raise ValueError(f"Отсутствуют обязательные колонки: {missing}")
         return True
     except Exception as e:
@@ -35,12 +35,12 @@ def convert_to_xlsx(csv_path):
         if not validate_csv(csv_path):
             return None
 
-        df = pd.read_csv(csv_path, usecols=["id", "datetime", "action"])
+        df = pd.read_csv(csv_path, usecols=["id", "timestamp", "action"])
         
         # Преобразование временной метки
         try:
-            df['datetime'] = pd.to_datetime(df['datetime'])
-            df['datetime'] = df['datetime'].dt.strftime(CONFIG['time_format'])
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df['timestamp'] = df['timestamp'].dt.strftime(CONFIG['time_format'])
         except Exception as e:
             print(f"[{datetime.now()}] Ошибка обработки времени: {str(e)}")
             return None
@@ -48,8 +48,14 @@ def convert_to_xlsx(csv_path):
         # Создание временного Excel файла
         temp_file = Path("temp_stats.xlsx")
         with pd.ExcelWriter(temp_file, engine='openpyxl') as writer:
+            # Основной лист с данными
             df.to_excel(writer, sheet_name='User Actions', index=False)
-
+            
+            # Лист с агрегированной статистикой по часам
+            df['hour'] = pd.to_datetime(df['timestamp']).dt.floor('H')
+            hourly_stats = df.groupby(['hour', 'action']).size().unstack(fill_value=0)
+            hourly_stats.to_excel(writer, sheet_name='Hourly Stats')
+            
         return temp_file
     except Exception as e:
         print(f"[{datetime.now()}] Ошибка конвертации: {str(e)}")
