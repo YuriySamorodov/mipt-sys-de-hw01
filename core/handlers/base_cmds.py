@@ -4,8 +4,8 @@ from aiogram.types import Message, FSInputFile
 from aiogram.types.webhook_info import WebhookInfo
 from aiogram.fsm.context import FSMContext
 from core.FSM.dialog_FSM import DialogReg
-import core.keyboards.reply_kb as reply_kb
-import core.keyboards.inline_kb as inline_kb
+# import core.keyboards.reply_kb as reply_kb
+# import core.keyboards.inline_kb as inline_kb
 from core.database.models import async_session
 from core.middlwares.db import DBMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
