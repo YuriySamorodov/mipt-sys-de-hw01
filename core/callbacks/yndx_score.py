@@ -7,6 +7,7 @@ from core.middlwares.db import DBMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database.models import async_session
 from aiogram import F, Router
+from aiogram import CallbackQuery
 import re
 import os
 import json
@@ -27,3 +28,4 @@ clbs_router.callback_query.middleware(DBMiddleware(async_session))
 async def handle_callback(callback: types.CallbackQuery):
     """Обработчик callback-запросов"""
     action_logger.log_action(callback.from_user.id, 'callback')
+    await callback.answer() 
