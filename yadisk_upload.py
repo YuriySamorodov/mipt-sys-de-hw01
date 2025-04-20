@@ -57,4 +57,40 @@ def convert_to_xlsx(csv_path):
             df['timestamp'] = pd.to_datetime(df['timestamp'])
             df['timestamp'] = df['timestamp'].dt.strftime(CONFIG['time_format'])
         except Exception as e:
-            raise ValueError(f"Ошибка
+            raise ValueError(f"Ошибка обработки времени: {str(e)}. Пример значения: {df['timestamp'].iloc[0]}")
+        
+        temp_file = Path("temp_stats.xlsx")
+        with pd.ExcelWriter(temp_file, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='User Actions', index=False)
+        
+        return temp_file
+    except Exception as e:
+        print(f"[{datetime.now()}] Ошибка конвертации: {str(e)}", file=sys.stderr)
+        return None
+
+def main():
+    try:
+        csv_file = Path(CONFIG['local_file'])
+        if not csv_file.exists():
+            print(f"[{datetime.now()}] Файл не найден: {csv_file}", file=sys.stderr)
+            return 1
+        
+        print(f"[{datetime.now()}] Проверка файла: {csv_file}")
+        print(f"Размер файла: {csv_file.stat().st_size} байт")
+        
+        try:
+            sample_df = pd.read_csv(csv_file, nrows=2)
+            print("Пример содержимого CSV:")
+            print(sample_df.to_string())
+        except Exception as e:
+            print(f"Не удалось прочитать CSV для диагностики: {str(e)}")
+        
+        # Здесь может быть остальная логика, например, загрузка на Яндекс.Диск
+        
+    except Exception as e:
+        print(f"[{datetime.now()}] Критическая ошибка: {str(e)}", file=sys.stderr)
+        return 1
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
