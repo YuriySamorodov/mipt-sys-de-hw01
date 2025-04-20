@@ -54,4 +54,22 @@ def upload_file():
 
         upload_path = csv_file
         if CONFIG['convert_to_excel']:
-            if xlsx_file := convert
+            if xlsx_file := convert_to_xlsx(csv_file):
+                upload_path = xlsx_file
+
+        remote_name = f"stats_{datetime.now().strftime('%Y%m%d_%H%M')}{upload_path.suffix}"
+        remote_path = f"{CONFIG['remote_path'].rstrip('/')}/{remote_name}"
+
+        # Upload file
+        disk.upload(str(upload_path), remote_path)
+        print(f"[{datetime.now()}] Successfully uploaded to {remote_path}")
+
+        # Cleanup temporary file
+        if CONFIG['convert_to_excel'] and upload_path.suffix == '.xlsx':
+            upload_path.unlink()
+
+    except Exception as e:
+        print(f"[{datetime.now()}] Upload failed: {str(e)}")
+
+if __name__ == "__main__":
+    upload_file()
