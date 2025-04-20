@@ -20,21 +20,13 @@ CONFIG = {
 }
 
 def validate_csv(file_path):
-    """Тщательная проверка структуры CSV файла"""
+    """Проверка структуры CSV файла без заголовков"""
     try:
-        df = pd.read_csv(file_path, nrows=0)
-        actual_columns = [col.strip().lower() for col in df.columns]
-        required_columns = [col.strip().lower() for col in CONFIG['required_columns']]
-        
-        missing = [col for col in required_columns if col not in actual_columns]
-        if missing:
-            actual_cols_str = ", ".join(df.columns) if len(df.columns) > 0 else "нет колонок"
+        df = pd.read_csv(file_path, header=None)
+        if df.shape[1] < len(CONFIG['required_columns']):
             raise ValueError(
-                f"Отсутствуют обязательные колонки: {missing}\n"
-                f"Фактические колонки в файле: {actual_cols_str}\n"
-                f"Ожидаемые колонки: {CONFIG['required_columns']}"
+                f"Недостаточно колонок: найдено {df.shape[1]}, ожидалось минимум {len(CONFIG['required_columns'])}"
             )
-        
         return True
     except pd.errors.EmptyDataError:
         raise ValueError("CSV файл пустой или не содержит данных")
@@ -42,23 +34,28 @@ def validate_csv(file_path):
         raise ValueError(f"Ошибка чтения CSV: {str(e)}")
 
 def convert_to_xlsx(csv_path):
-    """Конвертация CSV в XLSX с улучшенной обработкой ошибок"""
+    """Конвертация CSV без заголовков в XLSX"""
     try:
-        validate_csv(csv_path)
-        
+        # Чтение без заголовков
         df = pd.read_csv(
             csv_path,
-            usecols=CONFIG['required_columns'],
+            header=None,
+            names=CONFIG['required_columns'],
             dtype={'id': str, 'action': str}
         )
-        df.columns = df.columns.str.strip().str.lower()
-        
+
+        # Проверка на достаточное количество колонок
+        if df.shape[1] < len(CONFIG['required_columns']):
+            raise ValueError(f"Недостаточно колонок в данных: найдено {df.shape[1]}, ожидалось {len(CONFIG['required_columns'])}")
+
+        # Обработка временной метки
         try:
             df['timestamp'] = pd.to_datetime(df['timestamp'])
             df['timestamp'] = df['timestamp'].dt.strftime(CONFIG['time_format'])
         except Exception as e:
             raise ValueError(f"Ошибка обработки времени: {str(e)}. Пример значения: {df['timestamp'].iloc[0]}")
         
+        # Сохраняем в Excel
         temp_file = Path("temp_stats.xlsx")
         with pd.ExcelWriter(temp_file, engine='openpyxl') as writer:
             df.to_excel(writer, sheet_name='User Actions', index=False)
@@ -67,6 +64,25 @@ def convert_to_xlsx(csv_path):
     except Exception as e:
         print(f"[{datetime.now()}] Ошибка конвертации: {str(e)}", file=sys.stderr)
         return None
+
+def upload_to_yandex_disk(local_file, remote_path):
+    """Загрузка файла на Яндекс.Диск"""
+    try:
+        ydisk = YaDisk(token=os.getenv("YANDEX_DISK_TOKEN"))
+        
+        # Проверка, существует ли путь на Я.Диске
+        if not ydisk.exists(remote_path):
+            print(f"[{datetime.now()}] Указанный путь на Яндекс.Диске не существует: {remote_path}")
+            return False
+        
+        # Загрузка файла
+        print(f"[{datetime.now()}] Загружаем файл на Яндекс.Диск в {remote_path}")
+        ydisk.upload(local_file, remote_path)
+        print(f"[{datetime.now()}] Файл успешно загружен на Яндекс.Диск")
+        return True
+    except Exception as e:
+        print(f"[{datetime.now()}] Ошибка загрузки на Яндекс.Диск: {str(e)}", file=sys.stderr)
+        return False
 
 def main():
     try:
@@ -85,7 +101,20 @@ def main():
         except Exception as e:
             print(f"Не удалось прочитать CSV для диагностики: {str(e)}")
         
-        # Здесь может быть остальная логика, например, загрузка на Яндекс.Диск
+        # Конвертируем CSV в XLSX
+        temp_file = convert_to_xlsx(csv_file)
+        if not temp_file:
+            print(f"[{datetime.now()}] Ошибка конвертации CSV в XLSX", file=sys.stderr)
+            return 1
+        
+        # Загружаем файл на Яндекс.Диск
+        remote_file_path = os.path.join(CONFIG['remote_path'], CONFIG['remote_filename'])
+        if not upload_to_yandex_disk(temp_file, remote_file_path):
+            return 1
+        
+        # Удаляем временный файл после успешной загрузки
+        temp_file.unlink()
+        print(f"[{datetime.now()}] Временный файл удален: {temp_file}")
         
     except Exception as e:
         print(f"[{datetime.now()}] Критическая ошибка: {str(e)}", file=sys.stderr)
