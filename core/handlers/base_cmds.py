@@ -21,9 +21,9 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
     await add_user_stat(session,
                         message.from_user.id,
                         message.date,
-                        'start')
+                        'Поговорите со мной, пожалуйста')
 
-    await message.answer('Бот запущен')
+    await message.answer('Задайте мне вопрос, и я что-нибудь отвечу')
 
 
 @base_cmd_router.message(Command('help'))
