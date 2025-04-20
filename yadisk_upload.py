@@ -1,6 +1,7 @@
 #!/home/admin0/mipt-sys-de-hw01/venv/bin/python3.12
 import os
 import pandas as pd
+import openpyxl
 from datetime import datetime
 from yadisk import YaDisk
 from pathlib import Path
