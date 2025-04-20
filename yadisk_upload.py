@@ -5,34 +5,37 @@ from datetime import datetime
 from yadisk import YaDisk
 from pathlib import Path
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
 CONFIG = {
-    "remote_path": "/bot_statistics/",  # Must end with /
-    "local_file": "user_actions.csv",
+    "remote_path": "/bot_statistics/",  # папка на Яндекс Диске
+    "local_file": "user_actions.csv",  # Локальный csv файл
+    "remote_filename": "user_actions.xlsx", 
     "convert_to_excel": True
 }
 
 def convert_to_xlsx(csv_path):
-    xlsx_path = csv_path.with_suffix('.xlsx')
+    """ Ковертирует CSV в XLSX"""
     try:
         df = pd.read_csv(csv_path)
-        df.to_excel(xlsx_path, index=False, engine='openpyxl')
-        return xlsx_path
+        # Create in-memory Excel file
+        with pd.ExcelWriter("temp.xlsx", engine='openpyxl') as writer:
+            df.to_excel(writer, index=False)
+        return Path("temp.xlsx")
     except Exception as e:
         print(f"[{datetime.now()}] Conversion error: {str(e)}")
         return None
 
 def ensure_remote_dir(disk, path):
-    """Ensure remote directory exists, create if needed"""
+    """Проверяет наличие папки на Яндекс Диске"""
     try:
         if not disk.exists(path):
             disk.mkdir(path)
-            print(f"[{datetime.now()}] Created remote directory: {path}")
         return True
     except Exception as e:
-        print(f"[{datetime.now()}] Directory creation failed: {str(e)}")
+        print(f"[{datetime.now()}] Directory error: {str(e)}")
         return False
 
 def upload_file():
@@ -43,33 +46,48 @@ def upload_file():
             print(f"[{datetime.now()}] Invalid token")
             return
 
-        # Verify/create remote directory
+        # Проверяет папку на Яндекс Диске
         if not ensure_remote_dir(disk, CONFIG['remote_path']):
             return
 
+        # Проверяет, что исходный файл никуда не исчез
         csv_file = Path(CONFIG['local_file'])
         if not csv_file.exists():
             print(f"[{datetime.now()}] CSV file not found")
             return
 
+        # Конвертирует CSV в XSLX, если необходимо
         upload_path = csv_file
         if CONFIG['convert_to_excel']:
             if xlsx_file := convert_to_xlsx(csv_file):
                 upload_path = xlsx_file
 
-        remote_name = "user_actions"
-        remote_path = f"{CONFIG['remote_path'].rstrip('/')}/{remote_name}"
+        # Полный путь на Яндекс Диске
+        remote_path = f"{CONFIG['remote_path'].rstrip('/')}/{CONFIG['remote_filename']}"
 
-        # Upload file
-        disk.upload(str(upload_path), remote_path)
-        print(f"[{datetime.now()}] Successfully uploaded to {remote_path}")
+        # Загрузка на Яндекс Диск с перезаписью
+        for attempt in range(3):
+            try:
+                disk.upload(
+                    str(upload_path), 
+                    remote_path,
+                    overwrite=True  # This enables file overwriting
+                )
+                print(f"[{datetime.now()}] Successfully updated {remote_path}")
+                break
+            except Exception as e:
+                if attempt == 2:
+                    print(f"[{datetime.now()}] Final upload failed: {str(e)}")
+                else:
+                    print(f"[{datetime.now()}] Retrying upload... ({attempt+1}/3)")
+                    time.sleep(2)
 
-        # Cleanup temporary file
-        if CONFIG['convert_to_excel'] and upload_path.suffix == '.xlsx':
+        # Очистка временных файлов
+        if CONFIG['convert_to_excel'] and upload_path.exists() and upload_path.name == "temp.xlsx":
             upload_path.unlink()
 
     except Exception as e:
-        print(f"[{datetime.now()}] Upload failed: {str(e)}")
+        print(f"[{datetime.now()}] Critical error: {str(e)}")
 
 if __name__ == "__main__":
     upload_file()
