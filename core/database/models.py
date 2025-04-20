@@ -12,7 +12,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 load_dotenv()
 
-engine = create_async_engine(url=os.getenv('DATABASE_URL'))
+engine = create_async_engine(url=os.getenv('DATABASEURL'))
 async_session = async_sessionmaker(engine)
 
 
